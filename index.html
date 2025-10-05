@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T-EKMA Project</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #controls { margin-bottom: 20px; }
+        #plot { width: 900px; height: 600px; margin: auto; }
+        .input-group { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>T-EKMA Diagram</h2>
+    <div id="controls">
+        <div class="input-group">
+            <label for="userX">X值：</label>
+            <input type="number" id="userX" placeholder="请输入X值">
+            <label for="userY">Y值：</label>
+            <input type="number" id="userY" placeholder="请输入Y值">
+            <button onclick="plotUserPoint()">显示数据点</button>
+        </div>
+        <p>手动输入X,Y坐标，点击“显示数据点”即可在曲线图上显示。</p>
+    </div>
+    <div id="plot"></div>
+
+    <script src="tekma.js"></script>
+    <script src="site.js"></script>
+</body>
+</html>
