@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // 从在线链接获取站点 66 数据并绘制
-    fetch('https://www.aqhi.gov.hk/js/data/past_24_pollutant.js')
+    fetch('./past_24_pollutant.js')
         .then(response => response.text())
         .then(scriptText => {
             const match = scriptText.match(/var station_24_data = (\[.*\]);/);
