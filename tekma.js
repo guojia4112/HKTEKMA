@@ -1,70 +1,102 @@
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const plotDiv = document.getElementById('plot');
 
-  function getColor(idx, total) {
-    return `hsl(${Math.round(360 * idx / Math.max(1,total))}, 65%, 55%)`;
+  // 颜色映射（按 VOC 值生成色彩）。你可以改成其它色系或连续 colormap。
+  function colorForVOC(voc, vocMin, vocMax) {
+    const t = (voc - vocMin) / Math.max(1e-9, (vocMax - vocMin)); // 0..1
+    const hue = 240 - 240 * t; // 由蓝→红
+    return `hsl(${Math.round(hue)}, 70%, 50%)`;
   }
 
-  // 读取 4 列结构：VOC, NOX, 24NOX, M1M1O3
+  // 灰色虚线样式专用
+  const grayLine = { color: '#888', width: 1.8, dash: 'dash' };
+
   Papa.parse('data/TEKMA.csv', {
     download: true,
-    header: true,
-    dynamicTyping: true,
+    header: true,         // 第1行是表头
+    dynamicTyping: true,  // 把数字自动转为 number
+    skipEmptyLines: true,
     complete: function (results) {
-      const rows = results.data; // 每行一个对象：{VOC, NOX, 24NOX, M1M1O3}
-
-      // 1) 按 NOX 分组
-      const byNOX = new Map(); // key: NOX 值, value: [{VOC, x, y}]
-      for (let i = 0; i < rows.length; i++) {
-        const r = rows[i];
-        const VOC = r.VOC;
-        const NOX = r.NOX;
-        const x = r['24NOX'];
-        const y = r['M1M1O3'];
-        // 跳过缺失或非数值
-        if ([VOC, NOX, x, y].some(v => typeof v !== 'number' || isNaN(v))) continue;
-        if (!byNOX.has(NOX)) byNOX.set(NOX, []);
-        byNOX.get(NOX).push({ VOC, x, y });
+      const rows = results.data; // 期望 1050 条数据（不含表头）
+      if (!rows || rows.length === 0) {
+        Plotly.newPlot(plotDiv, [], { title: 'TEKMA.csv 为空或解析失败' });
+        return;
       }
 
-      // 2) 对每个 NOX 组按 VOC 升序
-      const noxValues = Array.from(byNOX.keys()).sort((a,b) => a - b);
-
-      // 3) 生成 Plotly 曲线
-      const traces = [];
+      // --- 预处理：剔除非数值行，并收集范围 ---
       let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+      const cleanRows = [];
+      for (const r of rows) {
+        const voc = r.VOC, nox = r.NOX, x = r['24NOX'], y = r['M1M1O3'];
+        if ([voc, nox, x, y].some(v => typeof v !== 'number' || isNaN(v))) continue;
+        cleanRows.push({ VOC: voc, NOX: nox, X: x, Y: y });
+        xmin = Math.min(xmin, x); xmax = Math.max(xmax, x);
+        ymin = Math.min(ymin, y); ymax = Math.max(ymax, y);
+      }
+      if (cleanRows.length === 0) {
+        Plotly.newPlot(plotDiv, [], { title: '没有有效数据点' });
+        return;
+      }
 
-      noxValues.forEach((nox, k) => {
-        const arr = byNOX.get(nox);
-        arr.sort((a,b) => a.VOC - b.VOC);
+      // --- 分组 A：按 VOC 分组（VOC 等值线，沿 NOX 连线，彩色实线） ---
+      const byVOC = new Map(); // key: VOC -> [{NOX, X, Y}]
+      for (const r of cleanRows) {
+        if (!byVOC.has(r.VOC)) byVOC.set(r.VOC, []);
+        byVOC.get(r.VOC).push({ NOX: r.NOX, X: r.X, Y: r.Y });
+      }
+      const vocValues = Array.from(byVOC.keys()).sort((a,b) => a - b);
+      const vocMin = vocValues[0], vocMax = vocValues[vocValues.length - 1];
 
-        const xs = arr.map(p => p.x); // 24NOX
-        const ys = arr.map(p => p.y); // M1M1O3
-
-        xs.forEach(x => { xmin = Math.min(xmin, x); xmax = Math.max(xmax, x); });
-        ys.forEach(y => { ymin = Math.min(ymin, y); ymax = Math.max(ymax, y); });
-
-        traces.push({
+      const vocTraces = vocValues.map(voc => {
+        const arr = byVOC.get(voc).sort((a,b) => a.NOX - b.NOX); // 沿 NOX 递增连线
+        const xs = arr.map(p => p.X);
+        const ys = arr.map(p => p.Y);
+        return {
           x: xs,
           y: ys,
           mode: 'lines',
-          name: `NOX=${nox}`,
-          line: { color: getColor(k, noxValues.length), width: 2 },
-          hovertemplate: `NOX=${nox}<br>24NOX: %{x}<br>M1M1O3: %{y}<extra></extra>`
-        });
+          name: `VOC=${voc}`,                 // 图例显示 VOC 值
+          line: { color: colorForVOC(voc, vocMin, vocMax), width: 2.2 },
+          hovertemplate: `VOC=${voc}<br>24NOX: %{x}<br>M1M1O3: %{y}<extra></extra>`,
+          legendgroup: 'VOC',
+          showlegend: true
+        };
       });
 
-      // 4) 绘图
+      // --- 分组 B：按 NOX 分组（NOX 等值线，沿 VOC 连线，灰色虚线） ---
+      const byNOX = new Map(); // key: NOX -> [{VOC, X, Y}]
+      for (const r of cleanRows) {
+        if (!byNOX.has(r.NOX)) byNOX.set(r.NOX, []);
+        byNOX.get(r.NOX).push({ VOC: r.VOC, X: r.X, Y: r.Y });
+      }
+      const noxValues = Array.from(byNOX.keys()).sort((a,b) => a - b);
+
+      const noxTraces = noxValues.map(nox => {
+        const arr = byNOX.get(nox).sort((a,b) => a.VOC - b.VOC); // 沿 VOC 递增连线
+        const xs = arr.map(p => p.X);
+        const ys = arr.map(p => p.Y);
+        return {
+          x: xs,
+          y: ys,
+          mode: 'lines',
+          name: `NOX=${nox}`,                 // 图例显示 NOX 值
+          line: grayLine,                     // 灰色虚线
+          hovertemplate: `NOX=${nox}<br>24NOX: %{x}<br>M1M1O3: %{y}<extra></extra>`,
+          legendgroup: 'NOX',
+          showlegend: false                   // 默认不占图例空间（避免太拥挤）；你也可改为 true
+        };
+      });
+
+      // --- 合并两类曲线并绘图 ---
+      const traces = [...noxTraces, ...vocTraces]; // 让灰色虚线先画，彩色曲线覆盖在上层
       const layout = {
-        title: 'T-EKMA 背景图（按 NOX 分组，沿 VOC 连线）',
-        xaxis: { title: '24NOX (X)', gridcolor: '#eee' },
-        yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee' },
-        legend: { orientation: 'h', x: 0, y: 1.08 },
-        plot_bgcolor: '#fafafa'
-        // 如需固定范围，可加：
-        // , xaxis: { title: '24NOX (X)', gridcolor: '#eee', range: [xmin, xmax] }
-        // , yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee', range: [ymin, ymax] }
+        title: 'T‑EKMA 背景图（VOC 等值线：彩色；NOX 等值线：灰色虚线）',
+        xaxis: { title: '24NOX (X)', gridcolor: '#eee' /*, range: [xmin, xmax]*/ },
+        yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee' /*, range: [ymin, ymax]*/ },
+        plot_bgcolor: '#fafafa',
+        legend: { orientation: 'h', x: 0, y: 1.08 }
       };
 
       Plotly.newPlot(plotDiv, traces, layout, { responsive: true });
