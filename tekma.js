@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const grayLine = { color: '#8a8a8a', width: 1.0, dash: 'dot'};
 
   // 读取 CSV（加时间戳绕缓存）
-  Papa.parse('data/TEKMA.csv?v=' + Date.now(), {
+  Papa.parse('data/TEKMA.csv', {
     download: true,
     header: true,         // 第1行是表头
     dynamicTyping: true,  // 数字自动转为 number
@@ -106,12 +106,11 @@ document.addEventListener("DOMContentLoaded", function () {
 		margin: { l: 60, r: 160, t: 60, b: 60 }
       };
 
-      Plotly.newPlot(plotDiv, traces, layout, { responsive: true });
+      Plotly.newPlot(plotDiv, [...noxTraces, ...vocTraces], layout, { responsive: true });
     },
-    error: function (err, file, inputElem, reason) {
-      console.error('[TEKMA parse] ERROR:', err, reason);
+    error: function (err) {
+      console.error('[TEKMA parse] ERROR:', err);
       Plotly.newPlot(plotDiv, [], { title: 'TEKMA.csv 加载失败' });
     }
   });
 });
-``
