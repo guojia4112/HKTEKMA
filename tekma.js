@@ -1,25 +1,31 @@
+// ==== 调试日志（确认文件已加载） ====
+console.log('[tekma.js] loaded at', new Date().toISOString());
 
-<script>
 document.addEventListener("DOMContentLoaded", function () {
   const plotDiv = document.getElementById('plot');
 
-  // 颜色映射（按 VOC 值生成色彩）。你可以改成其它色系或连续 colormap。
+  // 颜色映射（按 VOC 值生成色彩）：蓝->红
   function colorForVOC(voc, vocMin, vocMax) {
     const t = (voc - vocMin) / Math.max(1e-9, (vocMax - vocMin)); // 0..1
-    const hue = 240 - 240 * t; // 由蓝→红
+    const hue = 240 - 240 * t;
     return `hsl(${Math.round(hue)}, 70%, 50%)`;
   }
 
-  // 灰色虚线样式专用
-  const grayLine = { color: '#888', width: 1.8, dash: 'dash' };
+  // 灰色虚线样式（NOX 曲线）
+  const grayLine = { color: '#8a8a8a', width: 1.0, dash: 'dot'};
 
-  Papa.parse('data/TEKMA.csv', {
+  // 读取 CSV（加时间戳绕缓存）
+  Papa.parse('data/TEKMA.csv?v=' + Date.now(), {
     download: true,
     header: true,         // 第1行是表头
-    dynamicTyping: true,  // 把数字自动转为 number
+    dynamicTyping: true,  // 数字自动转为 number
     skipEmptyLines: true,
     complete: function (results) {
       const rows = results.data; // 期望 1050 条数据（不含表头）
+      console.log('[TEKMA parse] fields:', results.meta?.fields);
+      console.log('[TEKMA parse] rows length:', rows?.length);
+      console.log('[TEKMA parse] errors:', results.errors);
+
       if (!rows || rows.length === 0) {
         Plotly.newPlot(plotDiv, [], { title: 'TEKMA.csv 为空或解析失败' });
         return;
@@ -85,22 +91,27 @@ document.addEventListener("DOMContentLoaded", function () {
           line: grayLine,                     // 灰色虚线
           hovertemplate: `NOX=${nox}<br>24NOX: %{x}<br>M1M1O3: %{y}<extra></extra>`,
           legendgroup: 'NOX',
-          showlegend: false                   // 默认不占图例空间（避免太拥挤）；你也可改为 true
+          showlegend: false                   // 默认不占图例空间；需要可改成 true
         };
       });
 
       // --- 合并两类曲线并绘图 ---
-      const traces = [...noxTraces, ...vocTraces]; // 让灰色虚线先画，彩色曲线覆盖在上层
+      const traces = [...noxTraces, ...vocTraces]; // 灰线在底层，彩线覆盖在上层
       const layout = {
         title: 'T‑EKMA 背景图（VOC 等值线：彩色；NOX 等值线：灰色虚线）',
         xaxis: { title: '24NOX (X)', gridcolor: '#eee' /*, range: [xmin, xmax]*/ },
         yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee' /*, range: [ymin, ymax]*/ },
         plot_bgcolor: '#fafafa',
-        legend: { orientation: 'h', x: 0, y: 1.08 }
+        legend: { orientation: 'v', x: 1.02, y: 0.5 },
+		margin: { l: 60, r: 160, t: 60, b: 60 }
       };
 
       Plotly.newPlot(plotDiv, traces, layout, { responsive: true });
+    },
+    error: function (err, file, inputElem, reason) {
+      console.error('[TEKMA parse] ERROR:', err, reason);
+      Plotly.newPlot(plotDiv, [], { title: 'TEKMA.csv 加载失败' });
     }
   });
 });
-</script>
+``
