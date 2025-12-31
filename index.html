@@ -2,31 +2,41 @@
 <html>
 <head>
 <meta charset="UTF-8">
-    <title>T-EKMA Project</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>T-EKMA Project</title>
+
     <script src="https://cdn.plot.ly/plotly-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #controls { margin-bottom: 20px; }
-        #plot { width: 900px; height: 600px; margin: auto; }
-        .input-group { margin-bottom: 10px; }
+    <style>        
+body { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
+    h2 { text-align: center; }
+    #controls { max-width: 960px; margin: 12px auto 20px auto; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: #f8f8f8; }
+    #controls .input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    #controls label { font-weight: 600; }
+    #plot { width: 960px; height: 600px; margin: 0 auto; }
+    .hint { color: #666; font-size: 13px; margin-top: 6px; }
     </style>
 </head>
 <body>
-    <h2>T-EKMA Diagram</h2>
-    <div id="controls">
-        <div class="input-group">
-            <label for="userX">X值：</label>
-            <input type="number" id="userX" placeholder="请输入X值">
-            <label for="userY">Y值：</label>
-            <input type="number" id="userY" placeholder="请输入Y值">
-            <button onclick="plotUserPoint()">显示数据点</button>
+    
+<h2>T-EKMA Diagram</h2>
+
+  <!-- 控件：用户输入 X,Y，并触发 position.js 的全局函数 plotUserPoint() -->
+  <div id="controls">
+    <div class="input-group">
+      <label for="userX">X值（24NOX）：</label>
+      <input type="number" id="userX" step="any" placeholder="请输入 X 值（如 10.5）">
+      <label for="userY">Y值（M1M1O3）：</label>
+      <input type="number" id="userY" step="any" placeholder="请输入 Y 值（如 35.2）">
+      <button onclick="plotUserPoint()">显示数据点并估算 VOC/NOX</button>
+
         </div>
-        <p>手动输入X,Y坐标，点击“显示数据点”即可在曲线图上显示。</p>
+        <p class="hint">提示：点击按钮后，红点会显示在图上，并在旁边标注估算的 VOC/NOX。</p>
     </div>
     <div id="plot"></div>
 
     <script src="tekma.js"></script>
     <script src="sites.js"></script>
+	<script src="position.js"></script>
 </body>
 </html>
