@@ -2,41 +2,57 @@
 <html>
 <head>
 <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>T-EKMA Project</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>T-EKMA Project</title>
 
-    <script src="https://cdn.plot.ly/plotly-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <style>        
-body { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
-    h2 { text-align: center; }
-    #controls { max-width: 960px; margin: 12px auto 20px auto; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: #f8f8f8; }
-    #controls .input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    #controls label { font-weight: 600; }
-    #plot { width: 960px; height: 600px; margin: 0 auto; }
-    .hint { color: #666; font-size: 13px; margin-top: 6px; }
-    </style>
+<!-- 全局库（必须先加载，以便下面的模块/脚本可以使用全局的 Plotly 和 Papa） -->
+<script src="https://cdn.plot.ly/plotly-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
+  h2 { text-align: center; }
+  #controls { max-width: 960px; margin: 12px auto 20px auto; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: #f8f8f8; }
+  #controls .input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #controls label { font-weight: 600; }
+  #plot { width: 960px; height: 600px; margin: 0 auto; }
+  .hint { color: #666; font-size: 13px; margin-top: 6px; }
+</style>
 </head>
 <body>
-    
+
 <h2>T-EKMA Diagram</h2>
 
-  <!-- 控件：用户输入 X,Y，并触发 position.js 的全局函数 plotUserPoint() -->
-  <div id="controls">
-    <div class="input-group">
-      <label for="userX">X值（24NOX）：</label>
-      <input type="number" id="userX" step="any" placeholder="请输入 X 值（如 10.5）">
-      <label for="userY">Y值（M1M1O3）：</label>
-      <input type="number" id="userY" step="any" placeholder="请输入 Y 值（如 35.2）">
-      <button onclick="plotUserPoint()">显示数据点并估算 VOC/NOX</button>
+<!-- 控件：用户输入 X,Y，并触发 position.js 的全局函数 plotUserPoint() -->
+<div id="controls">
+  <div class="input-group">
+    <label for="userX">X值（24NOX）：</label>
+    <input type="number" id="userX" step="any" placeholder="请输入 X 值（如 10.5）">
+    <label for="userY">Y值（M1M1O3）：</label>
+    <input type="number" id="userY" step="any" placeholder="请输入 Y 值（如 35.2）">
+    <button onclick="plotUserPoint()">显示数据点并估算 VOC/NOX</button>
+  </div>
+  <p class="hint">提示：点击按钮后，红点会显示在图上，并在旁边标注估算的 VOC/NOX。</p>
+</div>
 
-        </div>
-        <p class="hint">提示：点击按钮后，红点会显示在图上，并在旁边标注估算的 VOC/NOX。</p>
-    </div>
-    <div id="plot"></div>
+<div id="plot"></div>
 
-    <script src="tekma.js"></script>
-    <script src="sites.js"></script>
-	<script src="position.js"></script>
+<!-- 你原来的脚本（保持原顺序），它们会在全局作用域中运行 -->
+<script src="tekma.js"></script>
+<script src="sites.js"></script>
+
+<!-- 入口模块（ES module）: position.js 现在为模块，会 import ./alg/locator.js
+     注意：position.js 会使用全局的 Papa 和 Plotly（上面已经通过全局脚本加载）；
+     position.js 会在 window 上暴露 plotUserPoint()，供按钮 onclick 使用 -->
+<script type="module" src="position.js"></script>
+
+<script>
+  // 使用本地开发时请通过 HTTP 服务器访问页面（不要用 file://）
+  // 例如：
+  //   Python3: python -m http.server 8000
+  //   Node:     npx http-server -p 8000
+  // 然后在浏览器打开 http://localhost:8000/
+</script>
+
 </body>
 </html>
