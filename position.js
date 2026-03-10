@@ -9,7 +9,7 @@ function ensurePlotInitialized() {
   if (typeof Plotly === 'undefined') return Promise.reject(new Error('Plotly 未加载'));
   if (plotDiv.data || plotDiv._fullData || plotDiv.layout) return Promise.resolve(plotDiv);
   const baseLayout = {
-    title: 'T‑EKMA Diagram', xaxis: { title: '24NOX (X)', gridcolor: '#eee' }, yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee' },
+    title: 'T‑EKMA Diagram', xaxis: { title: { text: '24NOx' }, gridcolor: '#eee' }, yaxis: {title: { text: 'M1M1O3' }, gridcolor: '#eee' },
     legend: { orientation: 'h', x: 0, y: 1.08 }, plot_bgcolor: '#fafafa', uirevision: 'bg'
   };
   return Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
