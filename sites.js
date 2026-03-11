@@ -1,17 +1,22 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const plotDiv = document.getElementById('plot');
 
-  function addSitesTrace() {
-    return new Promise((resolve, reject) => {
+// [sites.js] — 只负责添加站点散点；不做任何初始化/布局
+// 依赖 window.PLOTLY_READY（由 tekma.js 提供）
+
+(function(){
+  'use strict';
+
+  function addSitesTrace(gd){
+    return new Promise(function(resolve, reject){
       Papa.parse('data/NOXO3.csv', {
         download: true,
         header: true,
-        complete: function (res) {
-          const csvData = res.data || [];
-          const xValues = csvData.map(row => parseFloat(row.NOX));
-          const yValues = csvData.map(row => parseFloat(row.O3));
-          const siteNames = csvData.map(row => row.site);
-
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(res){
+          const rows = (res.data || []).filter(r => r && r.NOX != null && r.O3 != null);
+          const xValues = rows.map(r => parseFloat(r.NOX));
+          const yValues = rows.map(r => parseFloat(r.O3));
+          const siteNames = rows.map(r => r.site || '');
           const trace = {
             x: xValues,
             y: yValues,
@@ -20,28 +25,23 @@ document.addEventListener("DOMContentLoaded", function () {
             text: siteNames,
             textposition: 'top center',
             name: '站点数据',
-            marker: { color: 'blue', size: 10 },
+            marker: { color: '#1f77b4', size: 8, opacity: 0.9 },
             meta: 'SITES'
           };
-          resolve(Plotly.addTraces(plotDiv, trace));
+          Plotly.addTraces(gd, trace).then(resolve).catch(reject);
         },
         error: reject
       });
     });
   }
 
-  function ensurePlotInitialized() {
-    if (plotDiv && plotDiv._fullData) return Promise.resolve();
-    // 只做基础初始化，不设置坐标轴标题（让 tekma.js 的设置保留）
-    const baseLayout = {
-      plot_bgcolor: "#fafafa",
-      uirevision: 'bg'
-    };
-    return Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
+  // 等待底图就绪再添加站点
+  if (window.PLOTLY_READY && typeof window.PLOTLY_READY.then === 'function'){
+    window.PLOTLY_READY
+      .then(gd => addSitesTrace(gd))
+      .then(() => console.log('[sites] 站点数据已添加'))
+      .catch(err => console.error('[sites] 添加站点失败:', err));
+  } else {
+    console.warn('[sites] PLOTLY_READY 不存在，无法添加站点');
   }
-
-  ensurePlotInitialized()
-    .then(() => addSitesTrace())
-    .then(() => console.log('[sites] 站点数据已添加'))
-    .catch(err => console.error('[sites] 站点数据添加失败：', err));
-});
+})();
