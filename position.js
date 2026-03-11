@@ -3,52 +3,21 @@
 import { initGridFromCSV, isGridReady, estimateFromXY } from './alg/locator.js';
 
 // ===== 绘图相关（保留原逻辑） =====
-async function ensurePlotInitialized() {
+function ensurePlotInitialized() {
   const plotDiv = document.getElementById('plot');
-  if (!plotDiv) throw new Error('Plot 容器不存在');
-  if (typeof Plotly === 'undefined') throw new Error('Plotly 未加载');
+  if (!plotDiv) return Promise.reject(new Error('Plot 容器不存在'));
+  if (typeof Plotly === 'undefined') return Promise.reject(new Error('Plotly 未加载'));
+  if (plotDiv.data || plotDiv._fullData || plotDiv.layout) return Promise.resolve(plotDiv);
 
   const baseLayout = {
-    title: { text: 'T‑EKMA Diagram' },
-    xaxis: {
-      title: { text: '24NOx', font: { size: 16, color: '#222' } },
-      gridcolor: '#eee',
-      automargin: true,
-      visible: true,
-      showticklabels: true
-    },
-    yaxis: {
-      title: { text: 'M1M1O3', font: { size: 16, color: '#222' } },
-      gridcolor: '#eee',
-      automargin: true,
-      visible: true,
-      showticklabels: true
-    },
+    title: 'T‑EKMA Diagram',
+    xaxis: { title: '24NOX (X)', gridcolor: '#eee' },
+    yaxis: { title: 'M1M1O3 (Y)', gridcolor: '#eee' },
     legend: { orientation: 'h', x: 0, y: 1.08 },
     plot_bgcolor: '#fafafa',
-    paper_bgcolor: '#fff',
-    margin: { l: 70, r: 30, t: 50, b: 70 },
     uirevision: 'bg'
   };
-
-  // ===== ① 更严格判断是否已初始化（旧版 Plotly 容易误判）
-  if (!(plotDiv._fullLayout && plotDiv._fullLayout.xaxis && plotDiv._fullLayout.yaxis)) {
-    await Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
-  }
-
-  // ===== ② 无论如何都强制写入标题（避免被别的脚本覆盖）
-  await Plotly.relayout(plotDiv, {
-    'title.text': 'T‑EKMA Diagram',
-    'xaxis.title.text': '24NOx',
-    'yaxis.title.text': 'M1M1O3',
-    'xaxis.showticklabels': true,
-    'yaxis.showticklabels': true,
-    'xaxis.visible': true,
-    'yaxis.visible': true,
-    margin: { l: 70, r: 30, t: 50, b: 70 }
-  });
-
-  return plotDiv;
+  return Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
 }
 function findTraceIndexByMeta(metaTag) {
   const plotDiv = document.getElementById('plot');
