@@ -1,19 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const plotDiv = document.getElementById('plot');
 
-  function ensurePlotInitialized() {
-    if (plotDiv && plotDiv._fullData) return Promise.resolve();
-    const baseLayout = {
-      title: 'T-EKMA曲线与用户数据点及站点标注',
-     xaxis: { title: '24NOX', gridcolor: '#eee' },
-     yaxis: { title: 'M1M1O3', gridcolor: '#eee' },
-      legend: { orientation: "h", x: 0, y: 1.08 },
-      plot_bgcolor: "#fafafa",
-      uirevision: 'bg'
-    };
-    return Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
-  }
-
   function addSitesTrace() {
     return new Promise((resolve, reject) => {
       Papa.parse('data/NOXO3.csv', {
@@ -34,13 +21,23 @@ document.addEventListener("DOMContentLoaded", function () {
             textposition: 'top center',
             name: '站点数据',
             marker: { color: 'blue', size: 10 },
-                       meta: 'SITES'
+            meta: 'SITES'
           };
           resolve(Plotly.addTraces(plotDiv, trace));
         },
         error: reject
       });
     });
+  }
+
+  function ensurePlotInitialized() {
+    if (plotDiv && plotDiv._fullData) return Promise.resolve();
+    // 只做基础初始化，不设置坐标轴标题（让 tekma.js 的设置保留）
+    const baseLayout = {
+      plot_bgcolor: "#fafafa",
+      uirevision: 'bg'
+    };
+    return Plotly.newPlot(plotDiv, [], baseLayout, { responsive: true });
   }
 
   ensurePlotInitialized()
