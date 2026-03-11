@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (plotDiv && plotDiv._fullData) return Promise.resolve();
     const baseLayout = {
       title: 'T-EKMA曲线与用户数据点及站点标注',
-      xaxis: { title: 'X', gridcolor: '#eee' },
-      yaxis: { title: 'Y', gridcolor: '#eee' },
+     xaxis: { title: '24NOX', gridcolor: '#eee' },
+     yaxis: { title: 'M1M1O3', gridcolor: '#eee' },
       legend: { orientation: "h", x: 0, y: 1.08 },
       plot_bgcolor: "#fafafa",
       uirevision: 'bg'
