@@ -94,8 +94,8 @@
               plot_bgcolor: '#fafafa',
               font: { family: 'Arial, Helvetica, sans-serif', size: 13, color: '#222' },
               margin: { l: 70, r: 140, t: 60, b: 70 },
-              xaxis: { title: { text: '24NOX' }, gridcolor: '#eee', automargin: true, title_standoff: 8 },
-              yaxis: { title: { text: 'M1M1O3' }, gridcolor: '#eee', automargin: true, title_standoff: 8 },
+              xaxis: { title: { text: '24NOX (ppb)' }, gridcolor: '#eee', automargin: true, title_standoff: 8 },
+              yaxis: { title: { text: 'M1M1O3 (ppb)' }, gridcolor: '#eee', automargin: true, title_standoff: 8 },
               legend: { orientation: 'v', x: 1.02, xanchor: 'left', y: 0.5, yanchor: 'middle' },
               uirevision: 'v1'
             };
